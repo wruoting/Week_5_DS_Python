@@ -118,19 +118,19 @@ def main():
         prediction = knn_classifier.predict(X_test)
         # As a percentage
         error_rate[p] = np.round(np.multiply(np.mean(prediction != Y_test), 100), 2)
-    print("Confirm that the error rate for both classifiers are the same: {}".format(str(error_rate == error_rate_custom)))
+    print("Confirm that the error rate for both the custom and scipy classifiers are the same: {}".format(str(error_rate == error_rate_custom)))
     print("The error rate of the different p's are {}".format(error_rate_custom))
-    plt.plot(np.fromiter(error_rate_custom.keys(), dtype=float), np.fromiter(error_rate_custom.values(), dtype=float))
-    plt.title('P value vs Error rate - Training 2018, Testing 2018')
+    plt.plot(np.fromiter(error_rate_custom.keys(), dtype=float), np.subtract(100, np.fromiter(error_rate_custom.values(), dtype=float)))
+    plt.title('P value vs Accuracy - Training 2018, Testing 2018')
     plt.xlabel('P value')
-    plt.ylabel('Error Rate (%)')
+    plt.ylabel('Accuracy (%)')
     plt.savefig(fname='KNN_Classifiers_Q1')
     plt.show()
     plt.close()
-    print('The P value of 2 gives the lowest error rate, and therefore best accuracy of {}%'.format(float(100-error_rate_custom[2])))
+    print('The P value of 2 gives the best accuracy of {}%'.format(float(100-error_rate_custom[2])))
     
     print('\nQuestion 2')
-    print('The question is unclear, but I am repeating this with year 2 and using year 1 data to train.')
+    print('The question is unclear, as to which set to use as training data, but I am repeating this with year 2 and using year 1 data to train.')
     error_rate_custom = {}
     X_2019 = df_2019[['mean_return', 'volatility']].values
     Y_2019 = df_2019[['Classification']].values
@@ -142,15 +142,16 @@ def main():
         # As a percentage
         error_rate_custom[p] = np.round(np.multiply(np.mean(prediction_custom != Y_2019), 100), 2)
     print("The error rate of the different p's are {}".format(error_rate_custom))
-    print('The P value of 1.5 and 2 give the lowest error rate, and therefore best accuracy of {}%'.format(float(100-error_rate_custom[2])))
-    plt.plot(np.fromiter(error_rate_custom.keys(), dtype=float), np.fromiter(error_rate_custom.values(), dtype=float))
-    plt.title('P value vs Error rate - Training 2018, Testing 2019')
+    print('The P value of 1.5 and 2 give the best accuracy of {}%'.format(float(100-error_rate_custom[2])))
+    plt.plot(np.fromiter(error_rate_custom.keys(), dtype=float), np.subtract(100, np.fromiter(error_rate_custom.values(), dtype=float)))
+    plt.title('P value vs Accuracy - Training 2018, Testing 2019')
     plt.xlabel('P value')
-    plt.ylabel('Error Rate (%)')
+    plt.ylabel('Accuracy (%)')
     plt.savefig(fname='KNN_Classifiers_Q2')
     plt.show()
     plt.close()
-    print('Using 2018 data to test 2019 showed significantly lower accuracy.')
+    print('Using 2018 data to test 2019 showed significantly lower accuracy. Changing the distance metric between Minkovski and Euclidean did ')
+    print('not seem to make a difference in clustering label selection.')
     print('\nQuestion 3')
     # Train on 2018 data
     knn_custom_classifier = Custom_knn(number_neighbors_k=9, distance_parameter_p=1.5)
@@ -161,11 +162,14 @@ def main():
     # Pick two points with different labels in 2019
     # Week 1 is GREEN and Week 3 is RED
     print('Label for Week 1 is Green')
+    print('The graph presented shows a majority of green local points')
     knn_custom_classifier.draw_decision_boundary(X_2019[0])
     print('Label for Week 3 is Red')
+    print('The graph presented shows a majority of red local points')
     knn_custom_classifier.draw_decision_boundary(X_2019[2])
     
     print('\nQuestion 4 and Question 5')
+    print('2019 is predicted with 2018 trained data.')
     for p in [1, 1.5, 2]:
         # Train on 2018 data
         knn_custom_classifier = Custom_knn(number_neighbors_k=9, distance_parameter_p=p)
@@ -176,8 +180,13 @@ def main():
         print('Confusion matrix for p = {}'.format(p))
         print(confusion_matrix_df)
         print_confusion_matrix(Y_2019, confusion_matrix_df)
+    print('For question 5, there are some differences between the Euclidean/Minkowski and Manhattan ')
+    print('distance clustering, but the large number for K probably made the distance calculation ')
+    print('less impactful between p = 1.5 and p = 2. There was an accuracy jump as p increased, but ')
+    print('more continuous p values need to be explored in order to see if this is true.')
 
     print('\nQuestion 6')
+    # Import the CSV necessary for 2019 data
     df = pd.read_csv(file_name_self_labels, encoding='ISO-8859-1')
     df_trading_weeks = transform_trading_days_to_trading_weeks(df)
     trading_weeks_2019 = df_trading_weeks[df_trading_weeks['Year'] == '2019']
@@ -188,6 +197,7 @@ def main():
         knn_custom_classifier = Custom_knn(number_neighbors_k=9, distance_parameter_p=p)
         knn_custom_classifier.fit(X_2018, Y_2018.ravel())
         prediction_custom = knn_custom_classifier.predict(X_2019)
+        # Add columns for each of the different clustering methods
         trading_weeks_2019.insert(len(trading_weeks_2019.columns), "Predicted Labels {}".format(p), prediction_custom, allow_duplicates=True)
     trading_weeks_2019.insert(len(trading_weeks_2019.columns), "Buy and Hold", buy_and_hold, allow_duplicates=True)
     print('Trading Strategy for 2019 for $100 starting cash:')
@@ -204,6 +214,6 @@ def main():
     print('Buy and Hold')
     predicted_trading_buy_and_hold = trading_strategy(trading_weeks_2019, "Buy and Hold")
     print('${}'.format(predicted_trading_buy_and_hold[['Balance']].iloc[-1].values[0]))
-
+    print('The best trading strategy is still buy and hold.')
 if __name__ == "__main__":
     main()
