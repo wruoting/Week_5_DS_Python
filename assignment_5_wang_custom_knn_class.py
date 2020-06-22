@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from collections import deque, Counter
+import matplotlib.pyplot as plt
 
 class Custom_knn():
     def __init__(self, number_neighbors_k, distance_parameter_p=2):
@@ -43,12 +44,27 @@ class Custom_knn():
         new_x: the new input of what you want to predict
         returns: k neighbors with ids and colors
         '''
-        pass
+        k_closest_indices, k_closest_labels = self.__get_closest_neighbors(new_x)
+        nearest_k_points = self.training_values[k_closest_indices]
+        # Label each point on the graph
+        color_mapping = {
+            'GREEN': 'g',
+            'RED': 'r'
+        }
+        plt.scatter([x[0] for x in nearest_k_points], [x[1] for x in nearest_k_points], color=[color_mapping[label] for label in k_closest_labels])
+        plt.title('Decision Boundary Nearest Neighbors')
+        plt.xlabel('Mean Weekly Return (%)')
+        plt.ylabel('Std Dev Weekly Return (%)')
+    
+        for index, label in zip(k_closest_indices, k_closest_labels):
+            plt.text(self.training_values[index][0], self.training_values[index][1], s=index)
+        plt.show()
+    
 
-    def _predict_single(self, x):
+    def __get_closest_neighbors(self, x):
         '''
         x: this is a single entry out of an array of inputs
-        returns: prediction of single input
+        returns: a tuple of k closest indices and labels
         '''
         distance_vector = deque()
         label_vector = deque()
@@ -63,6 +79,15 @@ class Custom_knn():
         k_closest_indices = np.argsort(distance_vector_np)[0:self.k]
         # Print the labels with the k closest points
         k_closest_labels = [label_vector_np[k] for k in k_closest_indices]
+
+        return k_closest_indices, k_closest_labels
+
+    def _predict_single(self, x):
+        '''
+        x: this is a single entry out of an array of inputs
+        returns: prediction of single input
+        '''
+        k_closest_indices, k_closest_labels = self.__get_closest_neighbors(x)
 
         # Get the counter
         counter_labels = Counter(k_closest_labels)
